@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Erotic Novels for Females - Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Georgia&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    nav {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+
+    nav a {
+      color: #fff;
+      margin-left: 15px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #ff6f61;
+    }
+
+    header {
+      position: relative;
+      text-align: center;
+      padding: 120px 20px;
+      overflow: hidden;
+      border-bottom: 2px solid rgba(255, 111, 97, 0.5);
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('/imgs/title.jpg') no-repeat center center;
+      background-size: cover;
+      z-index: 0;
+      filter: brightness(0.6);
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      position: relative;
+      z-index: 1;
+      font-size: 3rem;
+      color: #ff6f61;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    header p {
+      position: relative;
+      z-index: 1;
+      font-size: 1.2rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    main {
+      padding: 40px 20px;
+    }
+
+    .welcome-message {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto 40px;
+      color: #ddd;
+      font-size: 1.2rem;
+      line-height: 1.8;
+    }
+
+    .story-teaser {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      height: 300px;
+      margin: 0 auto 40px;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .story-teaser:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+    }
+
+    .story-teaser img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      filter: brightness(0.8);
+      transition: filter 0.3s ease;
+    }
+
+    .story-teaser:hover img {
+      filter: brightness(1);
+    }
+
+    .story-teaser::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9));
+      z-index: 1;
+      transition: background 0.3s ease;
+    }
+
+    .story-teaser:hover::before {
+      background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 1));
+    }
+
+    .story-teaser-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .story-teaser-content h3 {
+      font-size: 1.5rem;
+      color: #ff6f61;
+      margin-bottom: 10px;
+      font-family: 'Playfair Display', serif;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .tag {
+      display: inline-block;
+      background: #ff6f61;
+      color: #fff;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .story-teaser-content p {
+      font-size: 1rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .story-teaser-content a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #ff6f61;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    }
+
+    .story-teaser-content a:hover {
+      background: #ff4d4d;
+    }
+
+    .categories-link {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .categories-link a {
+      display: inline-block;
+      padding: 15px 30px;
+      background: #ff6f61;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      transition: background 0.3s ease;
+    }
+
+    .categories-link a:hover {
+      background: #ff4d4d;
+    }
+
+    .newsletter-cta {
+      text-align: center;
+      margin-top: 60px;
+    }
+
+    .newsletter-cta p {
+      font-size: 1rem;
+      color: #ccc;
+      margin-bottom: 10px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.5);
+      margin-top: 40px;
+    }
+
+    footer p {
+      font-size: 0.9rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      .story-teaser {
+        height: 200px;
+      }
+
+      .story-teaser-content h3 {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/categories.html">Genres</a>
+    <a href="/login.html">Login</a>
+  </nav>
+
+  <header>
+    <h1>Welcome to Velvet Chapters</h1>
+    <p>Step into a world of passion, desire, and adventure—where every story ignites your imagination.</p>
+  </header>
+
+  <main>
+    <div class="welcome-message">
+      <p>
+        Welcome to a realm where forbidden desires, timeless romance, and thrilling adventures collide. Whether you're seeking tales of historical romance, contemporary erotica, or mythical seduction, our collection will transport you to worlds beyond your wildest dreams.
+      </p>
+      <p><strong><h3>Members-only stories await behind every cover.</strong> <a href="/login.html" style="color:#ff6f61;">Log in here</h3></a>.</p>
+    </div>
+
+    <!-- Story Teasers -->
+    <div class="story-teaser">
+      <img loading="lazy" src="/imgs/piratekissing.jpg" alt="The Pirate's Captive">
+      <div class="story-teaser-content">
+        <div class="tag">#Historical</div>
+        <h3>The Pirate's Captive</h3>
+        <p>
+          When she is taken aboard a pirate ship, she expects nothing but cruelty. But the captain’s smoldering gaze and unexpected kindness awaken feelings she thought were long buried...
+        </p>
+        <a href="reader2.html?storyId=1">Continue Reading →</a>
+      </div>
+    </div>
+
+    <div class="story-teaser">
+      <img loading="lazy" src="/imgs/princess.jpg" alt="The Royal Affair">
+      <div class="story-teaser-content">
+        <div class="tag">#Forbidden</div>
+        <h3>The Royal Affair</h3>
+        <p>
+          As a lady-in-waiting to the queen, she knows her place. But when the king’s brother sets his sights on her, their secret affair threatens to unravel the kingdom...
+        </p>
+        <a href="reader2.html?storyId=2">Continue Reading →</a>
+      </div>
+    </div>
+
+    <div class="story-teaser">
+      <img loading="lazy" src="/imgs/forbidden.jpg" alt="The Forbidden Bond">
+      <div class="story-teaser-content">
+        <div class="tag">#PowerPlay</div>
+        <h3>The Forbidden Bond</h3>
+        <p>
+          Bound by duty, she must serve as a concubine to the empire’s most powerful warlord. But as their connection deepens, she begins to question whether love can conquer power...
+        </p>
+        <a href="reader2.html?storyId=3">Continue Reading →</a>
+      </div>
+    </div>
+
+    <!-- Link to Categories Page -->
+    <div class="categories-link">
+      <a href="/categories.html">Explore All Genres →</a>
+    </div>
+
+    <!-- Newsletter CTA -->
+    <div class="newsletter-cta">
+      <p>Want a new steamy story in your inbox every week?</p>
+      <a href="/subscribe.html">Join Our Free Newsletter →</a>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Velvet Chapters. All rights reserved.</p>
+  </footer>
+</body>
+</html>

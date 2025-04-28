@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Magic Link Login</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header, footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      color: #ff6f61;
+      margin: 0;
+    }
+
+    header p {
+      font-style: italic;
+      color: #ccc;
+      margin-top: 8px;
+    }
+
+    main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 40px;
+    }
+
+    .section-box {
+      background: rgba(0, 0, 0, 0.85);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 18px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .section-box:hover {
+      transform: translateY(-3px);
+    }
+
+    h2 {
+      font-size: 1.7rem;
+      color: #ff6f61;
+      margin-bottom: 20px;
+    }
+
+    .lemonsqueezy-button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #ff6f61;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .lemonsqueezy-button:hover {
+      background: #ff4d4d;
+    }
+
+    input[type="email"], input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    input[type="email"] {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    input[type="submit"] {
+      background: #ff6f61;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background: #ff4d4d;
+    }
+
+    .status-message {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #ffd1d1;
+      min-height: 24px;
+    }
+
+    footer {
+      font-size: 0.9rem;
+      color: #bbb;
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .lemonsqueezy-button, input[type="submit"] {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Female Erotica</h1>
+    <p>A safe space for women...</p>
+  </header>
+
+  <main>
+    <!-- Buy section first -->
+    <div class="section-box">
+      <h2>Not a member yet?</h2>
+      <a href="https://velvetchapters.lemonsqueezy.com/buy/6f21df62-af91-4b21-a1da-e8dcc1470ce1?embed=1" class="lemonsqueezy-button">
+        Buy The Velvet Library
+      </a>
+    </div>
+
+    <!-- Login form -->
+    <div class="section-box">
+      <h2>Already a member? Login</h2>
+      <input type="email" id="email" placeholder="Enter your email" />
+      <input type="submit" value="Send Magic Link" onclick="sendMagicLink()" />
+      <p class="status-message" id="status"></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Female Erotica. All rights reserved.</p>
+  </footer>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
+  <!-- Lemon Squeezy -->
+  <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
+
+  <script>
+    const SUPABASE_URL = "https://hxdoygnmvnazulvhzkfc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI..."; // Your key
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function validateEmail(email) {
+      return /\S+@\S+\.\S+/.test(email);
+    }
+
+    async function sendMagicLink() {
+      const emailInput = document.getElementById("email");
+      const status = document.getElementById("status");
+      const email = emailInput.value.trim();
+
+      if (!validateEmail(email)) {
+        status.textContent = "❌ Please enter a valid email address.";
+        return;
+      }
+
+      status.textContent = "⏳ Sending magic link...";
+
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: "https://neelamberpreetthapa.github.io/AudioBites/"
+        }
+      });
+
+      if (error) {
+        status.textContent = `❌ ${error.message}`;
+      } else {
+        status.textContent = "✅ Magic link sent! Check your inbox.";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session) {
+        window.location.href = "https://neelamberpreetthapa.github.io/AudioBites/";
+      }
+    });
+  </script>
+</body>
+</html>

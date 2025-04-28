@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reader</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #fff;
+      line-height: 1.8;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .share-button-container {
+  text-align: center; /* Center the button */
+  margin-top: 20px; /* Add spacing above the button */
+}
+
+.share-button-container button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  background-color: #ff6f61; /* Soft pink for buttons */
+  color: #fff;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.share-button-container button:hover {
+  background-color: #ff4d4d; /* Slightly darker pink on hover */
+  transform: scale(1.05); /* Subtle zoom effect */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.7);
+}
+
+    header {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    }
+    header h1 {
+      font-size: 2.5rem;
+      color: #ff6f61;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    header p {
+      font-size: 1.2rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      background-color: #ff6f61;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    }
+    button:hover {
+      background-color: #ff4d4d;
+      transform: scale(1.05);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.7);
+    }
+    #page-info {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ff6f61;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    .text-area {
+      font-size: 1.1rem;
+      text-align: justify;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9));
+      min-height: 500px;
+      overflow-y: auto;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.5);
+      margin-top: 20px;
+    }
+    footer p {
+      font-size: 0.9rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 id="story-title">Loading Story...</h1>
+      <p>A place to immerse yourself in stories</p>
+    </header>
+    <main>
+      <div class="controls">
+        <button id="prev-page">Previous Page</button>
+        <span id="page-info">Page 1</span>
+        <button id="next-page">Next Page</button>
+      </div>
+      <div id="text-area" class="text-area">
+        <!-- Book content will be dynamically inserted here -->
+      </div>
+    </main>
+    <footer>
+        <button onclick="copyLink()">Share This Story</button>
+      <p>Enjoy your reading!</p>
+    </footer>
+  </div>
+  <script>
+    // Define the folder where story files are stored
+    const BOOKS_FOLDER = '/booksindex/';
+
+    // Mapping of storyId to filenames
+    const storyFileMap = {
+      1: 'moonlit-encounter.json',
+      2: 'journey-beyond.json',
+      3: 'The-Forbidden-Bond.json',
+      4: 'Oldcrush.json'
+    };
+
+    // Variables to manage the current story and page
+    let currentStoryId = null;
+    let bookContent = [];
+    let currentPage = 1;
+
+    // Get the story ID from the URL query parameter
+    function getStoryIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return parseInt(params.get('storyId')) || null;
+    }
+
+    // Fetch and load the selected story
+    async function loadStory(storyId) {
+      try {
+        // Get the filename from the mapping
+        const fileName = storyFileMap[storyId];
+        if (!fileName) {
+          throw new Error('Story not found');
+        }
+
+        // Fetch the specific story file
+        const response = await fetch(`${BOOKS_FOLDER}${fileName}`);
+        if (!response.ok) {
+          throw new Error('Story not found');
+        }
+
+        const story = await response.json();
+
+        currentStoryId = story.id;
+        document.getElementById('story-title').textContent = story.title;
+
+        // Split the story into pages
+        bookContent = splitIntoPages(story.content, 300);
+        loadSavedPage(); // Load saved page from localStorage
+        updateTextArea();
+      } catch (error) {
+        console.error('Error loading story:', error);
+        alert('Failed to load the story. Please try again.');
+        window.location.href = '/booksindex/storylist.html'; // Redirect to story list if story is not found
+      }
+    }
+
+    // Function to split content into pages based on word count
+    // Function to split content into pages based on word count
+    function splitIntoPages(content, maxWordsPerPage) {
+      const pages = [];
+      let currentPage = [];
+      let currentWordCount = 0;
+    
+      // Split the content into paragraphs
+      const paragraphs = content.split('\n\n');
+    
+      paragraphs.forEach(paragraph => {
+        // Check if this paragraph starts a new chapter
+        const isChapterStart = paragraph.startsWith('Chapter ');
+    
+        // If it's a new chapter and the current page isn't empty, start a new page
+        if (isChapterStart && currentPage.length > 0) {
+          pages.push(currentPage.join(' ').trim());
+          currentPage = [];
+          currentWordCount = 0;
+        }
+    
+        // Replace single newlines with <br> and wrap paragraphs in <p>
+        const formattedParagraph = `<p>${paragraph.replace(/\n/g, '<br>')}</p>`;
+        const words = formattedParagraph.split(' ');
+    
+        // Check if adding this paragraph exceeds the word limit
+        if (currentWordCount + words.length > maxWordsPerPage) {
+          // Save the current page and start a new one
+          pages.push(currentPage.join(' ').trim());
+          currentPage = [];
+          currentWordCount = 0;
+        }
+    
+        // Add the paragraph to the current page
+        currentPage.push(formattedParagraph);
+        currentWordCount += words.length;
+      });
+    
+      // Add any remaining content as the last page
+      if (currentPage.length > 0) {
+        pages.push(currentPage.join(' ').trim());
+      }
+    
+      return pages;
+    }
+    
+
+    // Update the text area with the current page content
+    function updateTextArea() {
+      const textArea = document.getElementById('text-area');
+      const pageInfo = document.getElementById('page-info');
+
+      if (currentPage > 0 && currentPage <= bookContent.length) {
+        textArea.innerHTML = bookContent[currentPage - 1]; // Use innerHTML to render HTML tags
+        pageInfo.textContent = `Page ${currentPage} / ${bookContent.length}`; // Show current page and total pages
+      } else {
+        textArea.innerHTML = "<p>No more pages.</p>";
+        pageInfo.textContent = "End of Book";
+      }
+    }
+
+    // Save the current page to localStorage
+    function savePage() {
+      localStorage.setItem(`lastPage-${currentStoryId}`, currentPage);
+    }
+
+    // Load saved page from localStorage
+    function loadSavedPage() {
+      if (currentStoryId && localStorage.getItem(`lastPage-${currentStoryId}`)) {
+        currentPage = parseInt(localStorage.getItem(`lastPage-${currentStoryId}`));
+      }
+    }
+
+    // Event listeners for navigation
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        updateTextArea();
+        savePage();
+      }
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (currentPage < bookContent.length) {
+        currentPage++;
+        updateTextArea();
+        savePage();
+      }
+    });
+
+    // Initialize the app
+    window.onload = () => {
+      const storyId = getStoryIdFromUrl();
+      if (storyId) {
+        loadStory(storyId);
+      } else {
+        alert('No story selected. Redirecting to the story list...');
+        window.location.href = '/booksindex/storylist.html';
+      }
+    };
+
+    function copyLink() {
+      const url = `${window.location.origin}/reader.html?storyId=${currentStoryId}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy link:', err);
+        alert('Failed to copy the link. Please try again.');
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+NOw all the books are being kept in one directory
+we are now ,oving on to the old method of having each storykind  being kept in a seperte folder as it will keep it easier for us to read and access it
