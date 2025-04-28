@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story List</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #fff;
+      line-height: 1.8;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    }
+    header h1 {
+      font-size: 2.5rem;
+      color: #ff6f61; /* Soft pink accent */
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    header p {
+      font-size: 1.2rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    .story-list {
+      margin-top: 20px;
+    }
+    .story-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .story-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+    }
+    .story-item a {
+      text-decoration: none;
+      color: #ff6f61;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: block;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.5);
+      margin-top: 20px;
+    }
+    footer p {
+      font-size: 0.9rem;
+      color: #ddd;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Historical Romance</h1>
+      <p>Select a story to begin reading</p>
+    </header>
+    <main>
+      <div class="story-list" id="story-list">
+        <!-- Story items will be dynamically inserted here -->
+      </div>
+    </main>
+    <footer>
+      <p>Enjoy your reading!</p>
+    </footer>
+  </div>
+  <script>
+    // Define the folder where story files are stored
+    const BOOKS_FOLDER = '/books/historical/';
+
+    // Mapping of storyId to filenames
+    const storyFileMap = {
+      1: 'seduced-by-the-silk-road.json',
+      2: 'the-courtesan’s-forbidden-lesson.json',
+      3: 'whispers-of-the-ravished-empress.json',
+      4: 'the-duke’s-darkest-desire.json',
+      5: 'scandalous-nights-at-versailles.json',
+      6: 'velvet-surrender-in-venice.json',
+      7: 'the-sultan’s-obedient-concubine.json',
+      8: 'taken-in-the-roman-baths.json',
+      9: 'the-highlander’s-rough-possession.json',
+      10: 'secrets-of-the-geisha’s-bedchamber.json'
+};
+
+
+    // Fetch and display the list of stories
+    function loadStoryList() {
+    try {
+        // Generate the list of stories from the mapping
+        const stories = Object.keys(storyFileMap).map(id => {
+            let title = storyFileMap[id].replace('.json', '').replace(/-/g, ' '); // Hyphens ko spaces se replace karna
+            title = title.replace(/\b\w/g, char => char.toUpperCase()); // Har word ka first letter capital karna
+            
+            return {
+                id: parseInt(id),
+                title: title
+            };
+        });
+
+        const storyList = document.getElementById('story-list');
+
+        stories.forEach(story => {
+            const storyItem = document.createElement('div');
+            storyItem.classList.add('story-item');
+
+            const storyLink = document.createElement('a');
+            storyLink.href = `/books/historical/historyreader.html?storyId=${story.id}`;
+            storyLink.textContent = story.title; // Capitalized title
+
+            storyItem.appendChild(storyLink);
+            storyList.appendChild(storyItem);
+        });
+    } catch (error) {
+        console.error('Error loading story list:', error);
+        alert('Failed to load the story list. Please try again.');
+    }
+}
+
+
+    // Initialize the app
+    window.onload = () => {
+      loadStoryList();
+    };
+  </script>
+</body>
+</html>
