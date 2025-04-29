@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Velvet Library – Checkout</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #f1f1f1;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .membership-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .membership {
+      background: #1e1e1e;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    .membership h2 {
+      margin-top: 0;
+      color: #ffd700;
+    }
+
+    .paypal-button-area {
+      margin-top: 1.5rem;
+    }
+
+    .description {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .price {
+      color: #aaa;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Choose Your Access</h1>
+  <div class="membership-container">
+
+    <!-- Monthly Subscription -->
+    <div class="membership">
+      <h2>Monthly Access – $9.98/month</h2>
+      <p class="description">
+        Full access to all erotic stories. Renews automatically. Cancel anytime.
+      </p>
+      <div class="paypal-button-area" id="paypal-monthly">Loading PayPal...</div>
+    </div>
+
+    <!-- Lifetime Access -->
+    <div class="membership">
+      <h2>Lifetime Access – $999.98 One-Time</h2>
+      <p class="price">Velvet Library – Lifetime Access<br>$998.98 USD</p>
+      <p class="description">
+        Gain unlimited, lifetime access to the complete Velvet Library collection.
+        This one-time payment unlocks all current and future content with no recurring fees.
+        Private, permanent, and premium.
+      </p>
+      <div class="paypal-button-area" id="paypal-lifetime">Loading PayPal...</div>
+    </div>
+
+  </div>
+
+  <!-- PayPal SDK -->
+  <script 
+    src="https://www.paypal.com/sdk/js?client-id=AY-vtrqe366Ijeoy7UMktaCSc3YU5y340XE9Ns_HY2mvqT6xnwhwl-oObT4n4wgHfvVNUTte74IcGHu4&vault=true&intent=subscription&components=buttons,hosted-buttons&disable-funding=venmo&currency=USD">
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Monthly Subscription Button
+      paypal.Buttons({
+        style: {
+          layout: 'vertical',
+          color: 'gold',
+          shape: 'rect',
+          label: 'subscribe'
+        },
+        createSubscription: function(data, actions) {
+          return actions.subscription.create({
+            plan_id: 'P-1CC74906DC878920PNAFSVVI'
+          });
+        },
+        onApprove: function(data, actions) {
+          alert('Subscription successful! ID: ' + data.subscriptionID);
+          // TODO: Send data.subscriptionID to your backend (Vercel webhook)
+        },
+        onError: function(err) {
+          console.error('PayPal subscription error:', err);
+        }
+      }).render('#paypal-monthly');
+
+      // Lifetime Access Button
+      paypal.HostedButtons({
+        hostedButtonId: "U52DKVA8WFGUY"
+      }).render("#paypal-lifetime");
+    });
+  </script>
+
+</body>
+</html>
