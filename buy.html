@@ -1,53 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>The Velvet Library – Checkout</title>
   <style>
     body {
-      background-color: #111;
+      background-color: #0d0d0d;
       color: #f1f1f1;
       font-family: 'Segoe UI', sans-serif;
       padding: 2rem;
+      margin: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
+    h1 {
+      color: #ff4d4d;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
     .membership-container {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 2rem;
-      max-width: 500px;
+      max-width: 1000px;
       width: 100%;
     }
 
     .membership {
-      background: #1e1e1e;
-      border: 1px solid #444;
+      background: #1a1a1a;
+      border: 1px solid #333;
       border-radius: 10px;
-      padding: 1.5rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      padding: 2rem;
+      flex: 1 1 300px;
+      box-shadow: 0 0 20px rgba(255, 77, 77, 0.25);
+      transition: transform 0.3s ease;
+    }
+
+    .membership:hover {
+      transform: translateY(-5px);
     }
 
     .membership h2 {
       margin-top: 0;
-      color: #ffd700;
+      color: #ff4d4d;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .description {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #ddd;
     }
 
     .paypal-button-area {
       margin-top: 1.5rem;
     }
 
-    .description {
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    .price {
-      color: #aaa;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
+    @media (max-width: 768px) {
+      .membership-container {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
@@ -62,19 +81,16 @@
       <p class="description">
         Full access to all erotic stories. Renews automatically. Cancel anytime.
       </p>
-      <div class="paypal-button-area" id="paypal-monthly">Loading PayPal...</div>
+      <div class="paypal-button-area" id="paypal-monthly"></div>
     </div>
 
     <!-- Lifetime Access -->
     <div class="membership">
-      <h2>Lifetime Access – $999.98 One-Time</h2>
-      <p class="price">Velvet Library – Lifetime Access<br>$998.98 USD</p>
+      <h2>Lifetime Access – One-Time Payment</h2>
       <p class="description">
-        Gain unlimited, lifetime access to the complete Velvet Library collection.
-        This one-time payment unlocks all current and future content with no recurring fees.
-        Private, permanent, and premium.
+        Unlock the complete Velvet Library forever. One-time payment, no recurring fees. All current and future content included.
       </p>
-      <div class="paypal-button-area" id="paypal-lifetime">Loading PayPal...</div>
+      <div class="paypal-button-area" id="paypal-lifetime"></div>
     </div>
 
   </div>
@@ -105,6 +121,7 @@
         },
         onError: function(err) {
           console.error('PayPal subscription error:', err);
+          alert("Something went wrong with the subscription. Please try again.");
         }
       }).render('#paypal-monthly');
 
