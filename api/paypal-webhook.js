@@ -1,8 +1,8 @@
-import fetch from 'node-fetch'; // Assuming node-fetch is available in Vercel environment
+import fetch from 'node-fetch';
 
 export const config = {
   api: {
-    bodyParser: true, // Vercel default is fine unless PayPal sends a raw stream
+    bodyParser: true,
   },
 };
 
@@ -12,37 +12,49 @@ export default async function handler(req, res) {
     url: req.url,
     headers: req.headers,
     // Log body for debugging, but be cautious with sensitive data in production logs
-    // body: req.body,
+    // body: req.body, // Uncomment carefully
   });
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // **SECURITY WARNING:**
+  // In a real-world application, you MUST verify the webhook signature
+  // to ensure the request is genuinely from PayPal. This code does NOT include
+  // signature verification. You would typically get the signature from headers
+  // (e.g., 'paypal-transmission-sig') and verify it using PayPal's API or SDK.
+  // Example: https://developer.paypal.com/api/rest/webhooks/verify-event/
+
   try {
     const { event_type, resource } = req.body;
 
     console.log('Received event type:', event_type);
+    // console.log('Received resource:', JSON.stringify(resource, null, 2)); // Log resource for debugging payload structure
 
     let email = null;
-    let paypal_order_id = null;
+    let paypal_order_id = null; // Used for one-time payments
     let amount_paid = null;
-    let payment_received_at = null;
+    let payment_received_at = null; // Timestamp of the specific event
     let account_type = null;
-    let subscription_id = null; // New variable for subscription ID
-    let subscription_status = null; // New variable for subscription status
-    let next_billing_date = null; // New variable for next billing date
+
+    // Subscription specific fields
+    let subscription_id = null;
+    let subscription_status = null;
+    let next_billing_date = null;
+    let last_payment_date = null; // To store the date of the last payment event
+    let last_payment_amount = null; // To store the amount of the last payment event
 
     // --- Logic to handle different event types ---
 
-    // Handle One-Time Payment Completion (e.g., from simple button or Orders API capture)
+    // Handle One-Time Payment Completion (e.g., from simple button, Orders API capture)
     // Common events: PAYMENT.CAPTURE.COMPLETED, PAYMENT.SALE.COMPLETED, checkout.order.completed
     if (event_type === 'PAYMENT.CAPTURE.COMPLETED' || event_type === 'PAYMENT.SALE.COMPLETED' || event_type === 'checkout.order.completed') {
       console.log('Processing one-time payment completion event');
       email = resource?.payer?.email_address;
       paypal_order_id = resource?.id || resource?.purchase_units?.[0]?.payments?.captures?.[0]?.id || resource?.resource?.id; // Handle variations in payload structure
       amount_paid = resource?.amount?.value || resource?.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value; // Handle variations
-      payment_received_at = resource?.create_time || resource?.update_time || new Date().toISOString();
+      payment_received_at = resource?.create_time || resource?.update_time || new Date().toISOString(); // Timestamp of this event
       account_type = 'one_time'; // Set account type for one-time purchase
 
       if (!email || !paypal_order_id || !amount_paid) {
@@ -50,56 +62,62 @@ export default async function handler(req, res) {
          return res.status(400).json({ error: 'Missing required PayPal fields for one-time payment' });
       }
 
-      // For one-time payments, we might just insert/update the user record
-      // and set a flag like `has_paid` or rely on `account_type`.
-      // We don't need subscription-specific fields here.
+      // For one-time payments, we will insert/update the user record
+      // based on email, setting account_type, payment details.
 
     }
     // Handle Subscription Related Events
     // Common events: BILLING.SUBSCRIPTION.CREATED, BILLING.SUBSCRIPTION.ACTIVATED,
-    // BILLING.SUBSCRIPTION.PAYMENT.COMPLETED, BILLING.SUBSCRIPTION.CANCELLED, etc.
+    // BILLING.SUBSCRIPTION.PAYMENT.COMPLETED, BILLING.SUBSCRIPTION.CANCELLED, UPDATED, SUSPENDED, EXPIRED, PAYMENT.FAILED
     else if (event_type.startsWith('BILLING.SUBSCRIPTION.')) {
         console.log('Processing subscription related event:', event_type);
 
-        // Payload structure for subscriptions is different
-        subscription_id = resource?.id;
-        email = resource?.subscriber?.email_address;
-        subscription_status = resource?.status; // e.g., 'APPROVAL_PENDING', 'ACTIVE', 'CANCELLED', 'EXPIRED'
-        account_type = 'monthly_subscription'; // Set account type for subscription
+        // Attempt to extract common subscription fields from various potential locations
+        // Use || to check alternative common paths for the same data point
+        subscription_id = resource?.id || resource?.billing_agreement_id; // ID might be in 'id' or 'billing_agreement_id'
+        email = resource?.subscriber?.email_address || resource?.payer?.payer_info?.email || resource?.payer?.email_address; // Email can be in different places
+        subscription_status = resource?.status || resource?.state; // Status might be in 'status' or 'state'
 
-        // For PAYMENT.COMPLETED events within a subscription, you might find payment details
+        // Set account type for subscription
+        account_type = 'monthly_subscription';
+
+        // Handle event-specific data extraction
+        payment_received_at = resource?.create_time || resource?.update_time || resource?.start_time || new Date().toISOString(); // Use a general event timestamp
+
         if (event_type === 'BILLING.SUBSCRIPTION.PAYMENT.COMPLETED') {
-            amount_paid = resource?.amount?.value; // Amount of the recurring payment
-            payment_received_at = resource?.create_time || new Date().toISOString();
-            // You might also get next_billing_date from the resource if available, or calculate it.
-            // The resource structure for PAYMENT.COMPLETED might link back to the subscription object.
-            // You might need to fetch the subscription details using the subscription_id if needed.
-            // For simplicity here, we'll rely on the BILLING.SUBSCRIPTION.CREATED/ACTIVATED event for initial setup.
-            // For subsequent payments, we'd update the last_payment_date and potentially next_billing_date.
+            console.log('Processing BILLING.SUBSCRIPTION.PAYMENT.COMPLETED specific details');
+            amount_paid = resource?.amount?.value; // Amount of THIS payment cycle
+            last_payment_amount = amount_paid; // Store this as the last payment amount
+            last_payment_date = resource?.create_time || new Date().toISOString(); // Store the time of THIS payment
+            // next_billing_date is typically in CREATED/ACTIVATED/UPDATED events, not PAYMENT.COMPLETED
         } else if (event_type === 'BILLING.SUBSCRIPTION.CREATED' || event_type === 'BILLING.SUBSCRIPTION.ACTIVATED') {
-             // When a subscription is created or activated, extract initial details
-             // The resource for CREATED/ACTIVATED events contains details about the plan and start date
-             payment_received_at = resource?.start_time || new Date().toISOString(); // Start date of the subscription
-             subscription_status = resource?.status; // Should be 'ACTIVE' for ACTIVATED event
-             next_billing_date = resource?.billing_info?.next_billing_time; // Next payment date
+            console.log('Processing BILLING.SUBSCRIPTION.CREATED/ACTIVATED specific details');
+            // The subscription start date is important, captured by payment_received_at above (if start_time exists)
+            next_billing_date = resource?.billing_info?.next_billing_time; // Next billing date is key here
+            // amount_paid for the first cycle might be available, but PAYMENT.COMPLETED event is more reliable for payment amount
+            // Let's rely on the PAYMENT.COMPLETED event for setting amount_paid/last_payment_amount
+        } else if (event_type === 'BILLING.SUBSCRIPTION.UPDATED') {
+             console.log('Processing BILLING.SUBSCRIPTION.UPDATED specific details');
+             // Common fields like ID, email, status/state are already handled by ORs above
+             // Check for specific updates like next_billing_date or last payment info IF they are part of the update payload
+             next_billing_date = resource?.billing_info?.next_billing_time || next_billing_date; // Update next_billing_date if present in update
+             last_payment_amount = resource?.agreement_details?.last_payment_amount?.value || last_payment_amount; // Update last payment amount if present
+             last_payment_date = resource?.agreement_details?.last_payment_date || last_payment_date; // Update last payment date if present
 
-             // The amount for the first payment might be in a related event or resource property
-             // For simplicity, you might get the plan amount from your own database based on the plan ID
-             // or rely on the first PAYMENT.COMPLETED event. Let's assume amount_paid is set by PAYMENT.COMPLETED
-             amount_paid = null; // Or fetch plan amount if needed
-        }
-        // Add cases for other subscription events like CANCELLED, SUSPENDED, EXPIRED etc.
-        // For CANCELLED, you'd update subscription_status to 'CANCELLED' in your DB.
+         }
+         // For CANCELLED, SUSPENDED, EXPIRED, PAYMENT.FAILED etc., the common extraction for ID, email, status is usually enough.
+         // You might log or add specific handling if needed for these states (e.g., send a notification email to the user).
 
+
+        // Now, check for REQUIRED essential fields after attempting extraction from all potential places
         if (!subscription_id || !email || !subscription_status) {
-             console.error('Missing required fields for subscription event', { subscription_id, email, subscription_status, resource });
-             return res.status(400).json({ error: 'Missing required PayPal fields for subscription event' });
+            console.error('Missing essential fields for subscription event after extraction attempts', { subscription_id, email, subscription_status, resource });
+            return res.status(400).json({ error: 'Missing essential PayPal fields for subscription event' });
         }
 
-        // For subscriptions, we need to update subscription-specific fields
-        // The Supabase call logic below will need to handle inserting/updating
-        // based on whether a user with this subscription_id already exists,
-        // or finding the user by email and updating their subscription details.
+         // We have successfully extracted essential subscription data.
+         // Proceed to Supabase interaction.
+         // The Supabase data structure will need to accommodate subscription fields.
 
     } else {
       console.log('Ignoring unhandled event type:', event_type);
@@ -107,24 +125,17 @@ export default async function handler(req, res) {
     }
 
     // --- Supabase Interaction ---
-
-    // Determine the unique identifier to find/create the user record.
-    // For one-time, email is the primary link.
-    // For subscriptions, subscription_id is unique to the subscription, but email links to the user.
-    // You might need to find by email first, then update, or use `onConflict` if Supabase supports it on email.
-
-    // Example Supabase call - needs adjustment based on your exact Supabase setup
-    // and how you link PayPal users to your auth_user_id.
-    // This example attempts to find by email and update/insert.
+    // The logic here seems generally okay - find user by email, then update or insert.
+    // We just need to ensure the `userDataToSave` object includes the correct fields
+    // based on the `account_type` and the data successfully extracted above.
 
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for server-side operations
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
         console.error('Supabase environment variables not set.');
         return res.status(500).json({ error: 'Server configuration error: Supabase keys missing.' });
     }
-
 
     // First, try to find the user by email
     const findUserResponse = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
@@ -146,32 +157,45 @@ export default async function handler(req, res) {
     let userDataToSave = {
       email: email,
       account_type: account_type,
-      payment_received_at: payment_received_at, // Timestamp of this specific payment/event
-      last_payment_date: payment_received_at, // Update last payment date on payment events
-      // Keep existing created_at if updating, set new if inserting
+      // Use payment_received_at as the timestamp for THIS specific event
+      payment_received_at: payment_received_at,
+      // created_at should only be set on initial insert
       ...(existingUsers.length === 0 && { created_at: new Date().toISOString() }),
+      // You might want an 'updated_at' timestamp as well
+      updated_at: new Date().toISOString(),
     };
 
-    // Add fields specific to the event type
+    // Add fields specific to the account type and the data extracted
     if (account_type === 'one_time') {
         userDataToSave = {
             ...userDataToSave,
             paypal_order_id: paypal_order_id,
+            // amount_paid is the amount of the one-time payment
             amount_paid: amount_paid,
-            // For one-time, maybe set a simple flag or rely on account_type === 'one_time'
-            // has_paid: true, // If you still want this flag
+            // For one-time, maybe set a simple flag like `is_premium` or rely on `account_type`
+            // is_premium: true, // Example based on successful one-time payment
         };
     } else if (account_type === 'monthly_subscription') {
         userDataToSave = {
             ...userDataToSave,
             subscription_id: subscription_id,
             subscription_status: subscription_status,
-            // amount_paid might be null for non-payment subscription events (CREATED, ACTIVATED)
-            ...(amount_paid !== null && { amount_paid: amount_paid }), // Only update amount if it's a payment event
-            ...(next_billing_date !== null && { next_billing_date: next_billing_date }), // Only update if available
-            // For subscriptions, `has_paid` logic is more complex, depends on `subscription_status`
-            // has_paid: subscription_status === 'ACTIVE', // Example logic
+            // Only include subscription payment details if they were captured from a PAYMENT.COMPLETED event
+            ...(last_payment_amount !== null && { last_payment_amount: last_payment_amount }),
+            ...(last_payment_date !== null && { last_payment_date: last_payment_date }),
+            // Only include next_billing_date if it was captured (e.g., from CREATED/ACTIVATED/UPDATED)
+            ...(next_billing_date !== null && { next_billing_date: next_billing_date }),
+
+            // Decide how `amount_paid` column should be used for subscriptions.
+            // If it means "amount of the most recent payment", set it from last_payment_amount.
+            // If it's not needed for subscriptions, remove this line.
+            // Let's keep `last_payment_amount` and `last_payment_date` separate for clarity.
+            // Consider if you need a simple flag like `is_active_subscriber` derived from `subscription_status`.
+            is_active_subscriber: subscription_status === 'ACTIVE', // Example flag
         };
+        // You might need to adjust your Supabase 'users' table schema to include
+        // `subscription_id`, `subscription_status`, `next_billing_date`, `last_payment_date`,
+        // `last_payment_amount`, `is_active_subscriber` fields.
     }
 
     let supabaseResponse;
@@ -193,6 +217,7 @@ export default async function handler(req, res) {
         body: JSON.stringify(userDataToSave),
       });
 
+      // Supabase PATCH/PUT/DELETE typically returns an array of affected rows (usually 1)
       supabaseData = await supabaseResponse.json();
       console.log('Supabase update response:', supabaseData);
 
@@ -200,6 +225,7 @@ export default async function handler(req, res) {
       // User does not exist, insert a new record
       console.log('User not found in Supabase, attempting to insert.');
 
+      // Ensure the data has all necessary fields for a new user record in your schema
       supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/users`, {
         method: 'POST', // Use POST to insert
         headers: {
@@ -211,23 +237,26 @@ export default async function handler(req, res) {
         body: JSON.stringify(userDataToSave),
       });
 
+      // Supabase POST typically returns an array containing the new record(s)
       supabaseData = await supabaseResponse.json();
       console.log('Supabase insert response:', supabaseData);
     }
 
 
-    if (!supabaseResponse.ok) {
-      console.error('Supabase operation error:', supabaseData);
-      // Log the data sent to Supabase for debugging
+    if (!supabaseResponse.ok || supabaseData.length === 0) {
+      console.error('Supabase operation failed or returned no data:', supabaseData);
       console.error('Data sent to Supabase:', userDataToSave);
       return res.status(500).json({ error: `Failed to process user in Supabase. Status: ${supabaseResponse.status}` });
     }
 
     console.log('Successfully processed webhook and updated Supabase.');
-    return res.status(200).json({ success: true, user: supabaseData });
+    // Return the successfully processed user data
+    return res.status(200).json({ success: true, user: supabaseData[0] || supabaseData });
 
   } catch (error) {
     console.error('Webhook handler error:', error);
+    // Log the request body here if possible for debugging severe errors, be cautious with sensitive data
+    // console.error('Request body that caused error:', req.body);
     return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 }
