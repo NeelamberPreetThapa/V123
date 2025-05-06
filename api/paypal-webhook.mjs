@@ -1,4 +1,4 @@
-// import fetch from 'node-fetch'; // Commented out as using dynamic import
+/// import fetch from 'node-fetch'; // Commented out as using dynamic import
 
 // REMOVE bodyParser config as we will manually parse
 export const config = {
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     // Check if rawBody is empty or not valid before parsing
     const body = rawBody.length > 0 ? JSON.parse(rawBody.toString()) : {}; // Handle potentially empty body
 
-    console.log('Manually parsed request body:', body); // Log the parsed body
+    console.log('Manually parsed request body:', body); // Log the parsed body - **Still hoping this appears**
 
     // Now destructure from the manually parsed body
     const { event_type, resource } = body; // Destructure from the parsed body
@@ -52,8 +52,8 @@ export default async function handler(req, res) {
     }
 
     console.log('Received event type:', event_type); // This log should now appear if parsing works
-    // console.log('Received resource:', JSON.stringify(resource, null, 2)); // Log resource for debugging payload structure
 
+    // ... (rest of variable initializations) ...
     let email = null;
     let paypal_order_id = null; // Used for one-time payments
     let amount_paid = null;
@@ -67,36 +67,44 @@ export default async function handler(req, res) {
     let last_payment_date = null; // To store the date of the last payment event
     let last_payment_amount = null; // To store the amount of the last payment event
 
+
     // --- Logic to handle different event types ---
 
     // Handle One-Time Payment Completion (e.g., from simple button, Orders API capture)
     // Common events: PAYMENT.CAPTURE.COMPLETED, PAYMENT.SALE.COMPLETED, checkout.order.completed
     if (event_type === 'PAYMENT.CAPTURE.COMPLETED' || event_type === 'PAYMENT.SALE.COMPLETED' || event_type === 'checkout.order.completed') {
       console.log('Processing one-time payment completion event');
-      email = resource?.payer?.email_address; // Common path, but might need more fallbacks
-      // Corrected path for ID/Amount in nested purchase_units/payments/captures based on typical payloads
-      paypal_order_id = resource?.id || resource?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.id || resource?.resource?.id;
-      amount_paid = resource?.amount?.value || resource?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.amount?.value;
-      payment_received_at = resource?.create_time || resource?.update_time || new Date().toISOString(); // Timestamp of this event
+      // --- UPDATED EXTRACTION LOGIC FOR ONE-TIME PAYMENTS ---
+      // Added more fallback paths for email and paypal_order_id based on different payload structures
+      email = resource?.payer?.email_address || body?.resource?.payer?.email_address || body?.payer?.email_address || resource?.supplementary_data?.payer?.email_address || resource?.order?.payer?.email_address || body?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.payer?.email_address || resource?.email; // Added more common paths including resource.email
+      paypal_order_id = resource?.id || resource?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.id || resource?.resource?.id || resource?.supplementary_data?.related_ids?.order_id || resource?.order_id || resource?.checkout_order?.id; // Added supplementary_data and other potential paths
+      amount_paid = resource?.amount?.value || resource?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.amount?.value || resource?.gross_amount?.value; // Added gross_amount fallback
+      payment_received_at = resource?.create_time || resource?.update_time || new Date().toISOString(); // Timestamp
       account_type = 'one_time'; // Set account type for one-time purchase
+      // --- END UPDATED EXTRACTION ---
 
-      if (!email || !paypal_order_id || !amount_paid) {
-         console.error('Missing required fields for one-time payment event', { email, paypal_order_id, amount_paid, resource });
-         // It might be better to still return 200 OK here for PayPal retries, but log the error
-         // return res.status(400).json({ error: 'Missing required PayPal fields for one-time payment' });
+      // --- Explicitly log the result of the required fields check ---
+      const missingOneTimeFields = !email || !paypal_order_id || !amount_paid;
+      console.log('One-Time Required Fields Check Result:', missingOneTimeFields, { email, paypal_order_id, amount_paid });
+      // --- End Explicit Log ---
+
+
+      if (missingOneTimeFields) { // Use the variable from the explicit log
+         console.error('Missing required fields for one-time payment event after extraction attempts:', { email, paypal_order_id, amount_paid, resource }); // Log what was found/missing
+         // Keeping the 200 return with skipped status
       } else {
-          console.log('Extracted One-Time Data:', { email, paypal_order_id, amount_paid, payment_received_at, account_type });
-      }
+           console.log('Extracted One-Time Data:', { email, paypal_order_id, amount_paid, payment_received_at, account_type }); // Log success
+           // If successful, the code would proceed to Supabase... but the skip check below will catch it
+       }
 
     }
     // Handle Subscription Related Events
     // Common events: BILLING.SUBSCRIPTION.CREATED, BILLING.SUBSCRIPTION.ACTIVATED,
     // BILLING.SUBSCRIPTION.PAYMENT.COMPLETED, BILLING.SUBSCRIPTION.CANCELLED, UPDATED, SUSPENDED, EXPIRED, PAYMENT.FAILED
-    else if (event_type.startsWith('BILLING.SUBSCRIPTION.')) {
+     else if (event_type.startsWith('BILLING.SUBSCRIPTION.')) {
         console.log('Processing subscription related event:', event_type);
 
         // Attempt to extract common subscription fields from various potential locations
-        // Use || to check alternative common paths for the same data point
         subscription_id = resource?.id || resource?.billing_agreement_id; // ID might be in 'id' or 'billing_agreement_id'
         email = resource?.subscriber?.email_address || resource?.payer?.payer_info?.email || resource?.payer?.email_address; // Email can be in different places
         subscription_status = resource?.status || resource?.state; // Status might be in 'status' or 'state'
@@ -118,7 +126,7 @@ export default async function handler(req, res) {
             // The subscription start date is important, captured by payment_received_at above (if start_time exists)
             next_billing_date = resource?.billing_info?.next_billing_time; // Next billing date is key here
             // amount_paid for the first cycle might be available, but PAYMENT.COMPLETED event is more reliable for payment amount
-            // Let's rely on the PAYMENT.COMPLETED event for setting amount_paid/last_payment_amount
+            // Let's rely on the PAYMENT.SUBSCRIPTION.PAYMENT.COMPLETED event for setting amount_paid/last_payment_amount
         } else if (event_type === 'BILLING.SUBSCRIPTION.UPDATED') {
              console.log('Processing BILLING.SUBSCRIPTION.UPDATED specific details');
              // Common fields like ID, email, status/state are already handled by ORs above
@@ -149,17 +157,20 @@ export default async function handler(req, res) {
 
     // If essential fields were missing, we logged an error and might want to stop processing the Supabase update
     // Add a check here before proceeding to Supabase
-    if (account_type === 'one_time' && (!email || !paypal_order_id || !amount_paid)) {
-        console.error('Skipping Supabase update due to missing One-Time fields.');
-        // Return 200 OK so PayPal doesn't retry a problematic payload endlessly
-        return res.status(200).json({ status: 'skipped', message: 'Missing required fields for one-time payment, skipping Supabase update' });
+    if (account_type === 'one_time') {
+        const missingOneTimeFields = !email || !paypal_order_id || !amount_paid; // Re-calculate or use the variable
+        if (missingOneTimeFields) {
+             console.error('Skipping Supabase update due to missing One-Time fields.'); // <--- This log should appear
+             return res.status(200).json({ status: 'skipped', message: 'Missing required fields for one-time payment, skipping Supabase update' });
+        }
+    } else if (account_type === 'monthly_subscription') { // Check for subscription missing fields
+        const missingSubscriptionFields = !subscription_id || !email || !subscription_status; // Re-calculate or use the variable
+        if (missingSubscriptionFields) {
+             console.error('Skipping Supabase update due to missing Subscription essential fields.'); // <--- This log should appear
+             return res.status(200).json({ status: 'skipped', message: 'Missing essential PayPal fields for subscription event, skipping Supabase update' });
+        }
     }
-     if (account_type === 'monthly_subscription' && (!subscription_id || !email || !subscription_status)) {
-        console.error('Skipping Supabase update due to missing Subscription essential fields.');
-         // Return 200 OK so PayPal doesn't retry a problematic payload endlessly
-        return res.status(200).json({ status: 'skipped', message: 'Missing essential PayPal fields for subscription event, skipping Supabase update' });
-    }
-    // Also skip if event_type was unhandled
+    // Also skip if event_type was unhandled (this is redundant with the else block return, but harmless)
     if (!account_type) { // account_type is set only for handled events
          console.log('Skipping Supabase update for unhandled event type.');
          // This case is already handled by the else block returning 200, but adding for clarity
@@ -172,6 +183,24 @@ export default async function handler(req, res) {
     // We just need to ensure the `userDataToSave` object includes the correct fields
     // based on the `account_type` and the data successfully extracted above.
 
+    // --- Debugging process.env access --- // Add these logs back
+    console.log('--- Debugging process.env access ---');
+    console.log('Is process defined?', typeof process !== 'undefined');
+    if (typeof process !== 'undefined') {
+        console.log('Is process.env defined?', typeof process.env !== 'undefined');
+        if (typeof process.env !== 'undefined') {
+             // Be cautious logging all keys in production, but useful for debugging
+             // console.log('process.env keys:', Object.keys(process.env)); // Uncomment with caution
+             console.log('SUPABASE_URL from process.env:', process.env.SUPABASE_URL ? 'Defined' : 'Undefined');
+             console.log('SUPABASE_SERVICE_ROLE_KEY from process.env:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Defined' : 'Undefined');
+        } else {
+             console.error('process.env is NOT defined.'); // Should not happen in Node.js
+        }
+    } else {
+        console.error('process is NOT defined.'); // Should not happen in Node.js
+    }
+     console.log('--- End Debugging process.env access ---'); // End logs
+
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -182,7 +211,7 @@ export default async function handler(req, res) {
     }
 
     // First, try to find the user by email
-    const findUserResponse = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
+    const findUserResponse = await fetch(`<span class="math-inline">\{supabaseUrl\}/rest/v1/users?email\=eq\.</span>{encodeURIComponent(email)}`, {
       method: 'GET',
       headers: {
         'apikey': supabaseServiceRoleKey,
@@ -252,7 +281,7 @@ export default async function handler(req, res) {
       const userId = existingUsers[0].id; // Get the Supabase user ID
       console.log('User found in Supabase, attempting to update:', userId);
 
-      supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}`, {
+      supabaseResponse = await fetch(`<span class="math-inline">\{supabaseUrl\}/rest/v1/users?id\=eq\.</span>{userId}`, {
         method: 'PATCH', // Use PATCH to update
         headers: {
           'apikey': supabaseServiceRoleKey,
@@ -280,30 +309,4 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
           'Prefer': 'return=representation', // Return the inserted record
         },
-        body: JSON.stringify(userDataToSave),
-      });
-
-      // Supabase POST typically returns an array containing the new record(s)
-      supabaseData = await supabaseResponse.json();
-      console.log('Supabase insert response:', supabaseData);
-    }
-
-
-    if (!supabaseResponse.ok || supabaseData.length === 0) {
-      console.error('Supabase operation failed or returned no data:', supabaseData);
-      console.error('Data sent to Supabase:', userDataToSave);
-      // Return 500 as this is a server issue
-      return res.status(500).json({ error: `Failed to process user in Supabase. Status: ${supabaseResponse.status}` });
-    }
-
-    console.log('Successfully processed webhook and updated Supabase.');
-    // Return the successfully processed user data
-    return res.status(200).json({ success: true, user: supabaseData[0] || supabaseData });
-
-  } catch (error) {
-    console.error('Webhook handler error:', error);
-    // Log the request body here if possible for debugging severe errors, be cautious with sensitive data
-    // console.error('Request body that caused error:', req.body); // Avoid logging body in catch unless necessary
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
-}
+        body: JSON.stringify(userDataTo
