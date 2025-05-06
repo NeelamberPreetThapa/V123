@@ -1,7 +1,9 @@
+// import fetch from 'node-fetch'; // Commented out as using dynamic import
 
+// REMOVE bodyParser config as we will manually parse
 export const config = {
   api: {
-    
+    // bodyParser: true, // Remove this line
   },
 };
 
@@ -23,6 +25,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  console.log('Method check passed, entering try block'); // <-- ***NAYA LOG ADDED HERE***
+
   // **SECURITY WARNING:** handsahake karne ki baat hai
   // In a real-world application, I MUST verify the webhook signature
   // to ensure the request is genuinely from PayPal. This code does NOT include
@@ -31,13 +35,13 @@ export default async function handler(req, res) {
   // Example: https://developer.paypal.com/api/rest/webhooks/verify-event/
 
   try {
-    console.log('Attempting to read raw body'); // <-- Naya Log 1
+    console.log('Attempting to read raw body'); // <-- Naya Log 1 (pehle add kiya tha)
     // Manually read the raw request body stream
     const rawBody = await buffer(req);
     console.log('Raw body read successfully, length:', rawBody.length); // <-- Naya Log 2
     // Convert buffer to string and parse JSON
     const rawBodyString = rawBody.toString();
-    console.log('Raw body as string (first 500 chars):', rawBodyString.substring(0, 500) + (rawBodyString.length > 500 ? '...' : '')); // <-- Naya Log 3 (body ke shuru ke 500 character dikhayega)
+    console.log('Raw body as string (first 500 chars):', rawBodyString.substring(0, 500) + (rawBodyString.length > 500 ? '...' : '')); // <-- Naya Log 3
 
     // Check if rawBody is empty or not valid before parsing
     const body = rawBodyString.length > 0 ? JSON.parse(rawBodyString) : {}; // Handle potentially empty body
