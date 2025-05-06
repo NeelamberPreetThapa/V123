@@ -80,7 +80,7 @@ export default async function handler(req, res) {
     // Common events: PAYMENT.CAPTURE.COMPLETED, PAYMENT.SALE.COMPLETED, checkout.order.completed
     if (event_type === 'PAYMENT.CAPTURE.COMPLETED' || event_type === 'PAYMENT.SALE.COMPLETED' || event_type === 'checkout.order.completed') {
       console.log('Processing one-time payment completion event');
-      email = resource?.payer?.email_address; // Common path, but might need more fallbacks
+      email = resource?.payer?.email_address || resource?.subscriber?.email_address; // Check payer, then subscriber
       // Corrected path for ID/Amount in nested purchase_units/payments/captures based on typical payloads
       paypal_order_id = resource?.id || resource?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.id || resource?.resource?.id;
       amount_paid = resource?.amount?.value || resource?.purchase_units?.[0]?.payments?.[0]?.captures?.[0]?.amount?.value;
