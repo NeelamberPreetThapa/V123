@@ -1,9 +1,7 @@
-// import fetch from 'node-fetch'; // Commented out as using dynamic import
 
-// REMOVE bodyParser config as we will manually parse
 export const config = {
   api: {
-    // bodyParser: true, // Remove this line
+    
   },
 };
 
@@ -33,13 +31,18 @@ export default async function handler(req, res) {
   // Example: https://developer.paypal.com/api/rest/webhooks/verify-event/
 
   try {
+    console.log('Attempting to read raw body'); // <-- Naya Log 1
     // Manually read the raw request body stream
     const rawBody = await buffer(req);
+    console.log('Raw body read successfully, length:', rawBody.length); // <-- Naya Log 2
     // Convert buffer to string and parse JSON
-    // Check if rawBody is empty or not valid before parsing
-    const body = rawBody.length > 0 ? JSON.parse(rawBody.toString()) : {}; // Handle potentially empty body
+    const rawBodyString = rawBody.toString();
+    console.log('Raw body as string (first 500 chars):', rawBodyString.substring(0, 500) + (rawBodyString.length > 500 ? '...' : '')); // <-- Naya Log 3 (body ke shuru ke 500 character dikhayega)
 
-    console.log('Manually parsed request body:', body); // Log the parsed body
+    // Check if rawBody is empty or not valid before parsing
+    const body = rawBodyString.length > 0 ? JSON.parse(rawBodyString) : {}; // Handle potentially empty body
+
+    console.log('Manually parsed request body:', body); // <-- Yeh pehle wala log hai
 
     // Now destructure from the manually parsed body
     const { event_type, resource } = body; // Destructure from the parsed body
@@ -301,9 +304,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, user: supabaseData[0] || supabaseData });
 
   } catch (error) {
-    console.error('Webhook handler error:', error);
-    // Log the request body here if possible for debugging severe errors, be cautious with sensitive data
-    // console.error('Request body that caused error:', req.body); // Avoid logging body in catch unless necessary
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    console.error('Error during body reading or parsing:', error); // <-- Catch log modified
+    // Log the request details *again* here for context if needed
+    console.error('Request context for error:', { method: req.method, url: req.url, headers: req.headers }); // <-- Request context added
+    return res.status(500).json({ error: 'Failed to read or parse webhook body', details: error.message }); // <-- Error response modified
   }
 }
