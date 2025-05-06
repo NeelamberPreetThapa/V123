@@ -127,9 +127,9 @@ export default async function handler(req, res) {
              last_payment_amount = resource?.agreement_details?.last_payment_amount?.value || last_payment_amount; // Update last payment amount if present
              last_payment_date = resource?.agreement_details?.last_payment_date || last_payment_date; // Update last payment date if present
 
-          }
-          // For CANCELLED, SUSPENDED, EXPIRED, PAYMENT.FAILED etc., the common extraction for ID, email, status is usually enough.
-          // You might log or add specific handling if needed for these states (e.g., send a notification email to the user).
+           }
+           // For CANCELLED, SUSPENDED, EXPIRED, PAYMENT.FAILED etc., the common extraction for ID, email, status is usually enough.
+           // You might log or add specific handling if needed for these states (e.g., send a notification email to the user).
 
 
         // Now, check for REQUIRED essential fields after attempting extraction from all potential places
@@ -163,7 +163,7 @@ export default async function handler(req, res) {
     if (!account_type) { // account_type is set only for handled events
          console.log('Skipping Supabase update for unhandled event type.');
          // This case is already handled by the else block returning 200, but adding for clarity
-          return res.status(200).json({ status: 'ignored', message: `Unhandled event type: ${event_type}, skipping Supabase update` });
+         return res.status(200).json({ status: 'ignored', message: `Unhandled event type: ${event_type}, skipping Supabase update` });
     }
 
 
@@ -306,52 +306,4 @@ export default async function handler(req, res) {
     // console.error('Request body that caused error:', req.body); // Avoid logging body in catch unless necessary
     return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
-}
-        return res.status(500).json({ error: 'Supabase environment variables not set' });
-    }
-
-    const userDataToSave = {
-        email,
-        account_type,
-        updated_at: new Date().toISOString(),
-        ...(account_type === 'one_time' && {
-            paypal_order_id,
-            amount_paid,
-            payment_received_at,
-        }),
-        ...(account_type === 'monthly_subscription' && {
-            subscription_id,
-            subscription_status,
-            next_billing_date,
-            last_payment_date,
-            last_payment_amount,
-            payment_received_at,
-        }),
-    };
-
-    try {
-        const response = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${email}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': supabaseServiceRoleKey,
-                'Authorization': `Bearer ${supabaseServiceRoleKey}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation',
-            },
-            body: JSON.stringify(userDataToSave),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            console.error('Supabase update failed:', result);
-            return res.status(500).json({ error: 'Supabase update failed', details: result });
-        }
-
-        console.log('Supabase update successful:', result);
-        return res.status(200).json({ status: 'success', updatedUser: result });
-    } catch (err) {
-        console.error('Error updating Supabase:', err);
-        return res.status(500).json({ error: 'Unexpected error updating Supabase' });
-    }
 }
