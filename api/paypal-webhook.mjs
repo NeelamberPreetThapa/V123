@@ -307,3 +307,51 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 }
+        return res.status(500).json({ error: 'Supabase environment variables not set' });
+    }
+
+    const userDataToSave = {
+        email,
+        account_type,
+        updated_at: new Date().toISOString(),
+        ...(account_type === 'one_time' && {
+            paypal_order_id,
+            amount_paid,
+            payment_received_at,
+        }),
+        ...(account_type === 'monthly_subscription' && {
+            subscription_id,
+            subscription_status,
+            next_billing_date,
+            last_payment_date,
+            last_payment_amount,
+            payment_received_at,
+        }),
+    };
+
+    try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${email}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': supabaseServiceRoleKey,
+                'Authorization': `Bearer ${supabaseServiceRoleKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation',
+            },
+            body: JSON.stringify(userDataToSave),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Supabase update failed:', result);
+            return res.status(500).json({ error: 'Supabase update failed', details: result });
+        }
+
+        console.log('Supabase update successful:', result);
+        return res.status(200).json({ status: 'success', updatedUser: result });
+    } catch (err) {
+        console.error('Error updating Supabase:', err);
+        return res.status(500).json({ error: 'Unexpected error updating Supabase' });
+    }
+}
