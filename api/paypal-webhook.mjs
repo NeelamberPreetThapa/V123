@@ -25,8 +25,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // **SECURITY WARNING:**
-  // In a real-world application, you MUST verify the webhook signature
+  // **SECURITY WARNING:** handsahake karne ki baat hai
+  // In a real-world application, I MUST verify the webhook signature
   // to ensure the request is genuinely from PayPal. This code does NOT include
   // signature verification. You would typically get the signature from headers
   // (e.g., 'paypal-transmission-sig') and verify it using PayPal's API or SDK.
