@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>The Velvet Library – Checkout</title>
+  <title>The Velvet Library – Choose Your Access</title>
   <style>
     body {
-      background-color: #0d0d0d;
-      color: #f1f1f1;
+      background-color: #0a0a0a;
+      color: #f8f8f8;
       font-family: 'Segoe UI', sans-serif;
       padding: 2rem;
       margin: 0;
@@ -16,50 +16,59 @@
     }
 
     h1 {
-      color: #ff4d4d;
-      margin-bottom: 2rem;
+      color: #ff2d75;
+      margin-bottom: 2.5rem;
       text-align: center;
+      font-size: 2.2rem;
     }
 
     .membership-container {
       display: flex;
-      flex-direction: row;
       flex-wrap: wrap;
       justify-content: center;
       gap: 2rem;
-      max-width: 1000px;
+      max-width: 1100px;
       width: 100%;
     }
 
     .membership {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 10px;
+      background: linear-gradient(145deg, #1a1a1a, #111);
+      border: 1px solid #ff2d75;
+      border-radius: 12px;
       padding: 2rem;
-      flex: 1 1 300px;
-      box-shadow: 0 0 20px rgba(255, 77, 77, 0.25);
-      transition: transform 0.3s ease;
+      flex: 1 1 280px;
+      box-shadow: 0 0 25px rgba(255, 45, 117, 0.25);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+      position: relative;
     }
 
     .membership:hover {
-      transform: translateY(-5px);
+      transform: translateY(-8px);
+      box-shadow: 0 0 35px rgba(255, 45, 117, 0.4);
     }
 
     .membership h2 {
-      margin-top: 0;
-      color: #ff4d4d;
-      font-size: 1.5rem;
+      color: #ff2d75;
+      font-size: 1.4rem;
       margin-bottom: 1rem;
     }
 
     .description {
       font-size: 0.95rem;
       line-height: 1.6;
-      color: #ddd;
+      color: #e0e0e0;
+      margin-bottom: 1.5rem;
+    }
+
+    .tagline {
+      font-size: 0.8rem;
+      font-style: italic;
+      color: #aaa;
+      margin-bottom: 0.5rem;
     }
 
     .paypal-button-area {
-      margin-top: 1.5rem;
+      margin-top: 0.5rem;
     }
 
     @media (max-width: 768px) {
@@ -72,42 +81,73 @@
 </head>
 <body>
 
-  <h1>Choose Your Access</h1>
+  <h1>Choose Your Experience</h1>
+
   <div class="membership-container">
+    
+    <!-- Weekly Subscription -->
+    <div class="membership">
+      <h2>Weekly Tease – $4.98/week</h2>
+      <div class="tagline">For the curious hearts. Dip your toes in desire.</div>
+      <p class="description">
+        Unlimited access for 7 days. No commitment, pure pleasure.
+      </p>
+      <div class="paypal-button-area" id="paypal-button-container-P-5NK54329R9758411ENAUH3TA"></div>
+    </div>
 
     <!-- Monthly Subscription -->
     <div class="membership">
-      <h2>Monthly Access – $9.98/month</h2>
+      <h2>Monthly Indulgence – $9.89/month</h2>
+      <div class="tagline">Your private sanctuary, month after month.</div>
       <p class="description">
-        Full access to all erotic stories. Renews automatically. Cancel anytime.
+        Full access to every story. Renews monthly. Cancel anytime.
       </p>
-      <div class="paypal-button-area" id="paypal-monthly"></div>
+      <div class="paypal-button-area" id="paypal-button-container-P-1CC74906DC878920PNAFSVVI"></div>
     </div>
 
-    <!-- Lifetime Access -->
+    <!-- Yearly Subscription -->
     <div class="membership">
-      <h2>Lifetime Access – One-Time Payment</h2>
+      <h2>Yearly Obsession – $99.98/year</h2>
+      <div class="tagline">Your long-term affair with The Velvet Library.</div>
       <p class="description">
-        Unlock the complete Velvet Library forever. One-time payment, no recurring fees. All current and future content included.
+        One year of full access. Save more, indulge longer.
       </p>
-      <div class="paypal-button-area" id="paypal-lifetime"></div>
+      <div class="paypal-button-area" id="paypal-button-container-P-3S1111506S017070BNAUIHVA"></div>
     </div>
 
   </div>
 
   <!-- PayPal SDK -->
   <script 
-    src="https://www.paypal.com/sdk/js?client-id=AY-vtrqe366Ijeoy7UMktaCSc3YU5y340XE9Ns_HY2mvqT6xnwhwl-oObT4n4wgHfvVNUTte74IcGHu4&vault=true&intent=subscription&components=buttons,hosted-buttons&disable-funding=venmo&currency=USD">
+    src="https://www.paypal.com/sdk/js?client-id=AY-vtrqe366Ijeoy7UMktaCSc3YU5y340XE9Ns_HY2mvqT6xnwhwl-oObT4n4wgHfvVNUTte74IcGHu4&vault=true&intent=subscription&disable-funding=venmo&currency=USD">
   </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Monthly Subscription Button
+      // Weekly Plan
       paypal.Buttons({
         style: {
-          layout: 'vertical',
-          color: 'gold',
-          shape: 'rect',
+          shape: 'pill',
+          color: 'black',
+          layout: 'horizontal',
+          label: 'subscribe'
+        },
+        createSubscription: function(data, actions) {
+          return actions.subscription.create({
+            plan_id: 'P-5NK54329R9758411ENAUH3TA'
+          });
+        },
+        onApprove: function(data) {
+          alert('Subscribed to Weekly! ID: ' + data.subscriptionID);
+        }
+      }).render('#paypal-button-container-P-5NK54329R9758411ENAUH3TA');
+
+      // Monthly Plan
+      paypal.Buttons({
+        style: {
+          shape: 'pill',
+          color: 'black',
+          layout: 'horizontal',
           label: 'subscribe'
         },
         createSubscription: function(data, actions) {
@@ -115,20 +155,28 @@
             plan_id: 'P-1CC74906DC878920PNAFSVVI'
           });
         },
-        onApprove: function(data, actions) {
-          alert('Subscription successful! ID: ' + data.subscriptionID);
-          // TODO: Send data.subscriptionID to your backend (Vercel webhook)
-        },
-        onError: function(err) {
-          console.error('PayPal subscription error:', err);
-          alert("Something went wrong with the subscription. Please try again.");
+        onApprove: function(data) {
+          alert('Subscribed to Monthly! ID: ' + data.subscriptionID);
         }
-      }).render('#paypal-monthly');
+      }).render('#paypal-button-container-P-1CC74906DC878920PNAFSVVI');
 
-      // Lifetime Access Button
-      paypal.HostedButtons({
-        hostedButtonId: "U52DKVA8WFGUY"
-      }).render("#paypal-lifetime");
+      // Yearly Plan
+      paypal.Buttons({
+        style: {
+          shape: 'pill',
+          color: 'black',
+          layout: 'horizontal',
+          label: 'subscribe'
+        },
+        createSubscription: function(data, actions) {
+          return actions.subscription.create({
+            plan_id: 'P-3S1111506S017070BNAUIHVA'
+          });
+        },
+        onApprove: function(data) {
+          alert('Subscribed to Yearly! ID: ' + data.subscriptionID);
+        }
+      }).render('#paypal-button-container-P-3S1111506S017070BNAUIHVA');
     });
   </script>
 
