@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Magic Link</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <h1>Supabase Magic Link Test</h1>
+  <button onclick="testMagicLink()">Send Magic Link</button>
+
+  <script>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      "https://ebakqsyqiqreemlgkhmv.supabase.co", // ✅ your Supabase URL
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYWtxc3lxaXFyZWVtbGdraG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2ODQ0NjAsImV4cCI6MjA1OTI2MDQ2MH0.2yp49L210Zec8DfSkI95UI5TrTuN1D7MkhaJs8Kdaq4" // ✅ your anon key
+    );
+
+    async function testMagicLink() {
+      const email = prompt("Enter your email:");
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: "https://neelamberpreetthapa.github.io/AudioBites/"
+        }
+      });
+      if (error) {
+        console.error("❌ Error:", error.message);
+        alert("❌ " + error.message);
+      } else {
+        alert("✅ Magic link sent!");
+      }
+    }
+  </script>
+</body>
+</html>
