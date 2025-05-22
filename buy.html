@@ -124,6 +124,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      // Redirect URL after successful payment
+      const redirectURL = "https://velvetchapters.com/test";
+
       // Weekly Plan
       paypal.Buttons({
         style: {
@@ -138,7 +141,7 @@
           });
         },
         onApprove: function(data) {
-          alert('Subscribed to Weekly! ID: ' + data.subscriptionID);
+          window.location.href = redirectURL;
         }
       }).render('#paypal-button-container-P-5NK54329R9758411ENAUH3TA');
 
@@ -156,7 +159,7 @@
           });
         },
         onApprove: function(data) {
-          alert('Subscribed to Monthly! ID: ' + data.subscriptionID);
+          window.location.href = redirectURL;
         }
       }).render('#paypal-button-container-P-1CC74906DC878920PNAFSVVI');
 
@@ -174,7 +177,7 @@
           });
         },
         onApprove: function(data) {
-          alert('Subscribed to Yearly! ID: ' + data.subscriptionID);
+          window.location.href = redirectURL;
         }
       }).render('#paypal-button-container-P-3S1111506S017070BNAUIHVA');
     });
