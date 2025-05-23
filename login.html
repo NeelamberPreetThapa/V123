@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Magic Link Login</title>
+  <title>Velvet Chapters Login</title>
   <style>
     body {
       font-family: 'Georgia', serif;
@@ -41,7 +41,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px 20px;
+      padding: 60px 20px; /* Added horizontal padding for smaller screens */
       gap: 40px;
     }
 
@@ -82,16 +82,17 @@
       background: #ff4d4d;
     }
 
-    input[type="email"], input[type="submit"] {
+    input[type="email"], input[type="password"], input[type="submit"] {
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
       border-radius: 6px;
       border: none;
       font-size: 1rem;
+      box-sizing: border-box; /* Crucial for correct width calculation */
     }
 
-    input[type="email"] {
+    input[type="email"], input[type="password"] {
       background: rgba(255, 255, 255, 0.1);
       color: white;
     }
@@ -138,7 +139,6 @@
   </header>
 
   <main>
-    <!-- Buy section first -->
     <div class="section-box">
       <h2>Not a member yet?</h2>
       <a href="buy.html" class="lemonsqueezy-button">
@@ -146,11 +146,11 @@
       </a>
     </div>
 
-    <!-- Login form -->
     <div class="section-box">
-      <h2>Already a member? Login</h2>
+      <h2>Member Login</h2>
       <input type="email" id="email" placeholder="Enter your email" />
-      <input type="submit" value="Send Magic Link" onclick="sendMagicLink()" />
+      <input type="password" id="password" placeholder="Enter your password" />
+      <input type="submit" value="Login" onclick="loginUser()" />
       <p class="status-message" id="status"></p>
     </div>
   </main>
@@ -159,54 +159,75 @@
     <p>&copy; 2025 Female Erotica. All rights reserved.</p>
   </footer>
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
-  <!-- Lemon Squeezy -->
   <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
 
-  <script>
-    const SUPABASE_URL = "https://ebakqsyqiqreemlgkhmv.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYWtxc3lxaXFyZWVtbGdraG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2ODQ0NjAsImV4cCI6MjA1OTI2MDQ2MH0.2yp49L210Zec8DfSkI95UI5TrTuN1D7MkhaJs8Kdaq4"; // Your key
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
 
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJYNhYQ-PcecFtAhDczgha1_yHM0X-brw",
+      authDomain: "velvetchapters-library.firebaseapp.com",
+      projectId: "velvetchapters-library",
+      storageBucket: "velvetchapters-library.firebasestorage.app",
+      messagingSenderId: "571452411295",
+      appId: "1:571452411295:web:56afa5648fb9c021ccc1aa",
+      measurementId: "G-41FD4E58TH"
+    };
 
-    function validateEmail(email) {
-      return /\S+@\S+\.\S+/.test(email);
-    }
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app); // Get the Auth service
+    const analytics = getAnalytics(app);
 
-    async function sendMagicLink() {
+    // Make auth globally accessible for the onclick function
+    window.firebaseAuth = auth;
+
+    // Login function using Firebase Authentication
+    window.loginUser = async function() {
       const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
       const status = document.getElementById("status");
-      const email = emailInput.value.trim();
 
-      if (!validateEmail(email)) {
-        status.textContent = "❌ Please enter a valid email address.";
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        status.textContent = "❌ Please enter both email and password.";
         return;
       }
 
-      status.textContent = "⏳ Sending magic link...";
+      status.textContent = "⏳ Logging in...";
 
-      const { error } = await supabaseClient.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: "https://neelamberpreetthapa.github.io/AudioBites/"
-        }
-      });
-
-      if (error) {
-        status.textContent = `❌ ${error.message}`;
-      } else {
-        status.textContent = "✅ Magic link sent! Check your inbox.";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", async () => {
-      const { data } = await supabaseClient.auth.getSession();
-      if (data.session) {
+      try {
+        const userCredential = await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+        // Signed in successfully
+        const user = userCredential.user;
+        console.log("User logged in:", user);
+        status.textContent = "✅ Login successful! Redirecting...";
+        // Redirect to your protected page or dashboard
         window.location.href = "https://neelamberpreetthapa.github.io/AudioBites/";
+      } catch (error) {
+        // Handle authentication errors
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.error("Firebase Auth Error:", errorCode, errorMessage);
+
+        if (errorCode === 'auth/invalid-email') {
+          status.textContent = "❌ Invalid email format.";
+        } else if (errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
+          status.textContent = "❌ Invalid email or password.";
+        } else if (errorCode === 'auth/too-many-requests') {
+          status.textContent = "❌ Too many login attempts. Please try again later.";
+        }
+        else {
+          status.textContent = `❌ Login failed: ${errorMessage}`;
+        }
       }
-    });
+    };
   </script>
 </body>
 </html>

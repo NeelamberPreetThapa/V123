@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up - Female Erotica</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header, footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      color: #ff6f61;
+      margin: 0;
+    }
+
+    header p {
+      font-style: italic;
+      color: #ccc;
+      margin-top: 8px;
+    }
+
+    main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 40px;
+    }
+
+    .section-box {
+      background: rgba(0, 0, 0, 0.85);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 18px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .section-box:hover {
+      transform: translateY(-3px);
+    }
+
+    h2 {
+      font-size: 1.7rem;
+      color: #ff6f61;
+      margin-bottom: 20px;
+    }
+
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+      box-sizing: border-box; /* Crucial for correct width calculation */
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+      font-weight: bold;
+      background: #ff6f61;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    button:hover {
+      background: #ff4d4d;
+    }
+
+    .status-message {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #ffd1d1;
+      min-height: 24px;
+    }
+
+    footer {
+      font-size: 0.9rem;
+      color: #bbb;
+    }
+
+    .login-link {
+      margin-top: 20px;
+      font-size: 0.95rem;
+    }
+
+    .login-link a {
+      color: #ff6f61;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+      color: #ff4d4d;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      button {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Female Erotica</h1>
+    <p>A safe space for women...</p>
+  </header>
+
+  <main>
+    <div class="section-box">
+      <h2>Create Your Account</h2>
+      <input id="email" type="email" placeholder="Enter your email" autocomplete="email" />
+      <input id="password" type="password" placeholder="Create your password" autocomplete="new-password" />
+      <input id="confirmPassword" type="password" placeholder="Confirm your password" autocomplete="new-password" />
+      <button onclick="signup()">Sign Up</button>
+      <p class="status-message" id="status"></p>
+
+      <p class="login-link">Already have an account? <a href="login.html">Login here</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Female Erotica. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJYNhYQ-PcecFtAhDczgha1_yHM0X-brw",
+      authDomain: "velvetchapters-library.firebaseapp.com",
+      projectId: "velvetchapters-library",
+      storageBucket: "velvetchapters-library.firebasestorage.app",
+      messagingSenderId: "571452411295",
+      appId: "1:571452411295:web:56afa5648fb9c021ccc1aa",
+      measurementId: "G-41FD4E58TH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.firebaseAuth = auth;
+
+    window.signup = async () => {
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const confirmPasswordInput = document.getElementById("confirmPassword"); // New: Get confirm password input
+      const status = document.getElementById("status");
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      const confirmPassword = confirmPasswordInput.value.trim(); // New: Get confirm password value
+
+      // Client-side validation: Check all fields are filled
+      if (!email || !password || !confirmPassword) {
+        status.textContent = "❌ Please fill in all fields.";
+        return;
+      }
+
+      // New: Check if passwords match
+      if (password !== confirmPassword) {
+        status.textContent = "❌ Passwords do not match.";
+        return;
+      }
+
+      // Existing validation: Check password length
+      if (password.length < 6) {
+        status.textContent = "❌ Password must be at least 6 characters long.";
+        return;
+      }
+
+      status.textContent = "⏳ Creating account...";
+
+      try {
+        await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
+        status.textContent = "✅ Account created successfully! Redirecting to login...";
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+      } catch (error) {
+        let errorMessage = "An error occurred during signup.";
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = "❌ This email is already in use.";
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = "❌ Please enter a valid email address.";
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = "❌ Password is too weak. Please use a stronger password.";
+        } else {
+          errorMessage = `❌ Error: ${error.message}`;
+        }
+        status.textContent = errorMessage;
+        console.error("Firebase Auth Error:", error);
+      }
+    };
+  </script>
+</body>
+</html>
