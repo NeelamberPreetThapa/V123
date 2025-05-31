@@ -96,7 +96,7 @@
             transform: scale(1.05);
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.7);
         }
-        /* Page info for top controls (will be hidden with .controls on mobile) */
+        /* Page info for top controls */
         #page-info-top {
             font-size: 1.2rem;
             font-weight: bold;
@@ -123,7 +123,7 @@
             -ms-user-select: none;
         }
 
-        /* Footer controls - hidden on desktop, visible on mobile */
+        /* Footer controls - hidden on desktop, visible and sticky on mobile */
         .footer-controls {
             display: none; /* Hidden by default for desktop */
             justify-content: space-between;
@@ -138,8 +138,7 @@
             width: 100%;
             box-sizing: border-box;
             z-index: 1000;
-            flex-wrap: wrap; /* Allow wrapping if space is very limited */
-            gap: 10px; /* Spacing between buttons */
+            gap: 10px; /* Spacing between elements */
         }
         /* Page info for bottom controls */
         #page-info-bottom {
@@ -184,28 +183,21 @@
             }
             .text-area {
                 min-height: 300px;
+                padding-bottom: 70px; /* Add padding to prevent text being hidden by sticky footer */
             }
             /* Show footer controls on mobile */
             .footer-controls {
                 display: flex; /* Make bottom controls visible on mobile */
             }
-            /* Make bottom buttons take less width to fit on one line better */
+            /* Make bottom buttons equal width */
             .footer-controls button {
-                flex-basis: auto; /* Revert to auto width */
-                width: auto; /* Allow buttons to shrink */
+                flex: 1; /* Distribute available space equally */
+                min-width: unset; /* Override any min-width */
             }
-            /* Center the page info in the footer controls for better alignment */
-            .footer-controls #page-info-bottom {
-                order: 2; /* Change order to appear between buttons */
-                flex-grow: 1;
-                text-align: center;
-            }
-            .footer-controls #prev-page-bottom {
-                order: 1;
-            }
-            .footer-controls #next-page-bottom {
-                order: 3;
-            }
+            /* For the page info to be in the middle of buttons, ensure proper order */
+            .footer-controls #prev-page-bottom { order: 1; }
+            .footer-controls #page-info-bottom { order: 2; }
+            .footer-controls #next-page-bottom { order: 3; }
         }
     </style>
 </head>
@@ -380,16 +372,35 @@
             }
         };
 
-        // Function to copy link
+        // --- Share Button Functionality (Commented out for now) ---
         function copyLink() {
+            /*
             const url = `${window.location.origin}/reader.html?storyId=${currentStoryId}`;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Link copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy link:', err);
-                alert('Failed to copy the link. Please try again.');
-            });
+            if (navigator.share) {
+                // Web Share API is available
+                navigator.share({
+                    title: document.getElementById('story-title').textContent,
+                    text: 'Check out this story!',
+                    url: url,
+                }).then(() => {
+                    console.log('Successfully shared');
+                }).catch((error) => {
+                    console.error('Error sharing:', error);
+                    alert('Failed to share the story. Please try again.');
+                });
+            } else {
+                // Fallback for browsers that do not support Web Share API
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy link:', err);
+                    alert('Failed to copy the link. Please try again.');
+                });
+            }
+            */
+            alert('Share functionality is currently disabled.'); // Inform the user
         }
+
 
         // --- Copy Protection ---
         // Prevent selection
